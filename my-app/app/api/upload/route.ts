@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-console.log("HIIIII")
   const formData = await req.formData();
   const file = formData.get("video") as File;
 
