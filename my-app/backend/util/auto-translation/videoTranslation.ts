@@ -1,11 +1,13 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import {
-  SpeechToTextConvertRequestEntityDetection,
-  SpeechToTextConvertResponse,
-} from "@elevenlabs/elevenlabs-js/api";
+
 import * as ffmpeg from "fluent-ffmpeg";
+import { DoDubbingResponse, SpeechToTextConvertRequestEntityDetection, SpeechToTextConvertResponse } from "@elevenlabs/elevenlabs-js/api";
+import dotenv from 'dotenv';
 
-
+interface dubbedFile {
+    dubbingId: string,
+    expected_duration_sec: number
+}
 
 export class videoTranscription {
 
@@ -30,18 +32,29 @@ export class videoTranscription {
 
     public async transcribe(videoFile : File) {
         
-        const transcription : object = await this.elevenLabs.speechToText.convert({
+        const dubbed: DoDubbingResponse = await this.elevenLabs.dubbing.create({
             file: videoFile ,
-            modelId: "scribe_v2"
+            targetLang: "en"
         })
-        if("languageCode" in transcription && "text" in transcription) {
-            if (transcription["languageCode"] !== "eng" && typeof(transcription["text"]) === "string" ) {
-                return transcription.text;
-            } else {
-                return transcription.text;
-            }
+        while (true) {
+            const { status } = await this.elevenLabs.dubbing.get(
+                dubbed.dubbingId
+              );
+              if (status === "dubbed") {
+                const dubbedFile = await this.elevenLabs.dubbing.transcripts.get(
+                    dubbed.dubbingId,
+                    "en",
+                    "srt"
+                )
+                console.log(dubbedFile);
+                return(dubbedFile);
+              } else {
+                console.log("Audio is still being dubbed...");
+              }
+              // Wait 5 seconds between checks
+              await new Promise((resolve) => setTimeout(resolve, 5000));
         }
-        return null;
+    
     }
 
     public translateCaption(caption : string) {

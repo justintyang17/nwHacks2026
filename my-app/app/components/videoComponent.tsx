@@ -2,7 +2,15 @@
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
 
-export default function VideoComponent({ url, index, removeCallback, uploadCallback }) {
+interface VideoComponentProps {
+    url: string;
+    index: number;
+    removeCallback: (index: number, url: string) => void;
+    uploadCallback: (index: number, url: string) => void;
+}
+
+
+export default function VideoComponent({url, index, removeCallback, uploadCallback} : VideoComponentProps) {
 
     const handleUpdate = () => {
         uploadCallback(index, url)
