@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { OriginalVideoProvider } from "./context/VideoContext";
 import { EditedVideoProvider } from "./context/EditedVideoContext";
+import { SocialMediaContextProvider } from "./context/SocialMediaContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,11 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <OriginalVideoProvider>
-          <EditedVideoProvider>{children}</EditedVideoProvider>
-        </OriginalVideoProvider>
+        <SocialMediaContextProvider>
+            <OriginalVideoProvider>
+                <EditedVideoProvider>{children}</EditedVideoProvider>
+            </OriginalVideoProvider>
+        </SocialMediaContextProvider>
       </body>
     </html>
   );
