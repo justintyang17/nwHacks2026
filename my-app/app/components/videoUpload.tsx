@@ -1,7 +1,9 @@
-
 "use client";
 
-import { Button } from "@mui/material";
+import {
+    Button,
+    Typography,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Slider from "react-slick";
@@ -9,124 +11,149 @@ import VideoComponent from "./videoComponent";
 import { setSelectedVideoFile } from "./videoStore";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { useOriginalVideoContext } from "../context/VideoContext";
+
 
 export default function VideoUpload() {
     const router = useRouter();
-    const [videos, setVideos] = useState<File[]>([]);
-    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-    const [currVideo, setCurrVideo] = useState<File | null>(null);
 
+    const { originalVideos, addOriginalVideo, removeOriginalVideo } = useOriginalVideoContext();
     const sliderSettings = {
-    infinite: false,
-    slidesToShow: 4,
-    slidesToScroll: 4,
-    arrows: true,
-    draggable: true,
-    responsive: [
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      { breakpoint: 600, settings: { slidesToShow: 1 } },
-    ],
-  };
+        infinite: false,
+        slidesToShow: 3,
+        slidesToScroll: 3,
+        arrows: true,
+        draggable: true,
+        responsive: [
+            { breakpoint: 1024, settings: { slidesToShow: 2 } },
+            { breakpoint: 600, settings: { slidesToShow: 1 } },
+        ],
+    };
 
-    //Set Videos State Variable
     const handleAddChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
         const vid = e.target.files[0];
-        setVideos((prev) => [...prev, vid]);
-        setCurrVideo(vid);
+        addOriginalVideo(vid)
     };
 
     const handleRemove = (idx: number, url: string) => {
-        const index = previewUrls.indexOf(url);
-        if (index !== idx) {
-            console.log("INDEX MISMATCH")
-        }
-        if (idx === -1) {
-            console.log("remove error");
-            return; // URL not found
-        }
-
-        setVideos((prevVideos) => prevVideos.filter((_, i) => i !== idx));
-
-        setPreviewUrls((prevUrls) => prevUrls.filter((u) => u !== url));
+        removeOriginalVideo(idx);
     };
 
-    //Set Preview Urls
-    useEffect(() => {
-        if (videos.length == 0) return;
+    // useEffect(() => {
+    //     if (originalVideos.length === 0) return;
+        
+    //     const urls = originalVideos.map((v) => URL.createObjectURL(v));
+    //     setPreviewUrls(urls);
+    // }, [originalVideos]);
 
-        const urls = videos.map((video) => URL.createObjectURL(video));
-        setPreviewUrls(urls);
-    }, [videos]);
-
-    // "Upload for editing" now routes to the edit page instead of
-    // immediately sending the video to the backend.
     const handleUpload = (idx: number, url: string) => {
-        const video = videos[idx];
-        if (!video) {
-            console.log("upload ERROR");
-            return;
-        }
+        //const video = videos[idx];
+        const video = originalVideos[idx]
+        if (!video) return;
 
-        // Save the selected file in memory so the edit page can send
-        // it to the backend when the user applies changes.
-        setSelectedVideoFile(video);
-
-        // Save the preview URL so the edit page can show the video.
-        if (typeof window !== "undefined") {
-            sessionStorage.setItem("videoToEditUrl", url);
-        }
+        setSelectedVideoFile(video.file);
+        sessionStorage.setItem("videoToEditUrl", url);
 
         router.push("/edit");
     };
 
     return (
-        <div
+        <main
             style={{
+                minHeight: "100vh",
+                padding: "32px 24px",
+                backgroundColor: "#000000",
+                color: "#f9fafb",
                 display: "flex",
                 flexDirection: "column",
-                height: "100vh", // full viewport height
+                alignItems: "center",
+                gap: 24,
             }}
         >
-            {/*Top Bar*/}
-            <div style={{ height: "60px", backgroundColor: "#444", color: "#fff", padding: 16 }}>
-                <h1>Privacy Video Processor</h1></div>
-
-            {/* Upload Area*/}
+            {/* Header */}
             <div
                 style={{
-                    flex: 1,
-                    backgroundColor: "#666",
+                    width: "100%",
+                    maxWidth: 960,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
+            >
+                <Typography variant="h5">Add Videos</Typography>
+                <Button variant="outlined" color="inherit">
+                    Help
+                </Button>
+            </div>
+
+            {/* Upload Card */}
+            <div
+                style={{
+                    width: "100%",
+                    maxWidth: 960,
+                    backgroundColor: "rgba(15,23,42,0.45)",
+                    borderRadius: 20,
+                    padding: 20,
+                    border: "1px solid rgba(148,163,184,0.35)",
+                    boxShadow: "0 18px 45px rgba(0,0,0,0.65)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
                     display: "flex",
                     alignItems: "center",
-                    padding: 16,
                     gap: 16,
                 }}
             >
                 <Button variant="contained" component="label">
-                    Add Video
+                    Add video
                     <input
                         type="file"
                         accept="video/*"
+                        hidden
                         onChange={handleAddChange}
-                        style={{ display: "none" }}
                     />
                 </Button>
+                <Typography variant="body2" color="gray">
+                    Upload one or more videos to edit
+                </Typography>
             </div>
 
+            {/* Video Carousel Card */}
+            <div
+                style={{
+                    width: "100%",
+                    maxWidth: 960,
+                    backgroundColor: "rgba(15,23,42,0.45)",
+                    borderRadius: 20,
+                    padding: 20,
+                    border: "1px solid rgba(148,163,184,0.35)",
+                    boxShadow: "0 18px 45px rgba(0,0,0,0.65)",
+                    backdropFilter: "blur(18px)",
+                    WebkitBackdropFilter: "blur(18px)",
+                }}
+            >
+                <Typography variant="subtitle1" gutterBottom>
+                    Uploaded videos
+                </Typography>
 
-        {/* Video Carousel */}
-      <div style={{ flex: 1, backgroundColor: "#888", padding: 16 }}>
-        {previewUrls.length === 0 ? (
-          <h3 style={{ color: "#fff" }}>No videos uploaded yet</h3>
-        ) : (
-          <Slider {...sliderSettings}>
-            {previewUrls.map((previewUrl, idx) => (
-              <VideoComponent key={idx} url={previewUrl} index={idx} removeCallback={handleRemove} uploadCallback={handleUpload}/>
-            ))}
-          </Slider>
-        )}
-      </div>
-        </div>
+                {originalVideos.length == 0 ? (
+                    <Typography variant="body2" color="gray">
+                        No videos uploaded yet
+                    </Typography>
+                ) : (
+                    <Slider {...sliderSettings}>
+                        {originalVideos.map((video, idx) => (
+                            <VideoComponent
+                                key={idx}
+                                url={video.url}
+                                index={idx}
+                                removeCallback={handleRemove}
+                                uploadCallback={handleUpload}
+                            />
+                        ))}
+                    </Slider>
+                )}
+            </div>
+        </main>
     );
 }

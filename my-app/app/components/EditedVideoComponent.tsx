@@ -2,10 +2,22 @@
 import { Button } from "@mui/material";
 import { useState, useEffect } from "react";
 
-export default function VideoComponent({ url, index, removeCallback, uploadCallback }) {
+interface EditedVideoComponentProps {
+    url: string;
+    index: number;
+    removeCallback: (index: number, url: string) => void;
+    downloadCallback: (index: number, url: string) => void;
+    shareCallback: (index: number, url:string) => void;
+}
+
+export default function EditedVideoComponent({ url, index, removeCallback, shareCallback, downloadCallback }: EditedVideoComponentProps) {
 
     const handleUpdate = () => {
-        uploadCallback(index, url)
+        downloadCallback(index, url)
+    }
+
+    const handleShare = () => {
+        shareCallback(index, url)
     }
 
     const handleRemove = () => {
@@ -19,7 +31,7 @@ export default function VideoComponent({ url, index, removeCallback, uploadCallb
                     width: "300px",
                     height: "200px",
                     backgroundColor: "#000",
-                    display: "inline-block", // for horizontal scroll
+                    display: "inline-block",
                     marginRight: "16px",
                     borderRadius: 4,
                     overflow: "hidden",
@@ -40,10 +52,13 @@ export default function VideoComponent({ url, index, removeCallback, uploadCallb
                 }}
             >
                 <Button variant="contained" onClick={handleUpdate}>
-                    Edit
+                    Download
+                </Button>
+                <Button variant="contained" onClick={handleShare}>
+                    Share
                 </Button>
                 <Button variant="contained" color="error" onClick={handleRemove}>
-                    Remove
+                    Delete
                 </Button>
             </div>
         </div>

@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSelectedVideoFile } from "../components/videoStore";
 
+import { useEditedVideoContext } from "../context/EditedVideoContext";
+
 export default function EditPage() {
   const router = useRouter();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -20,6 +22,9 @@ export default function EditPage() {
   const [error, setError] = useState<string | null>(null);
   const [blurredUrl, setBlurredUrl] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+
+  const { addEditedVideo } = useEditedVideoContext();
+
 
   // Assume the video was chosen on the landing page and its URL
   // (or some identifier) was stored in sessionStorage.
@@ -88,6 +93,13 @@ export default function EditPage() {
       setIsGeneratingSubs(false);
     }
   };
+
+  const saveVideo = () => {
+    if(videoFile) {
+        addEditedVideo(videoFile);
+        router.push("/clips")
+    }
+  }
 
   return (
     <main
@@ -327,7 +339,7 @@ export default function EditPage() {
           variant="outlined"
           color="inherit"
           // TODO: wire this to a page that lists edited clips
-          onClick={() => router.push("/clips")}
+          onClick={saveVideo}
           disabled={!previewUrl}
         >
           Finish
