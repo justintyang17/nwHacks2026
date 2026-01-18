@@ -6,7 +6,7 @@ export async function POST(req: Request) {
 
   if (!file) {
     return NextResponse.json(
-      { error: "No video uploaded" },
+      { error: "No videos uploaded" },
       { status: 400 }
     );
   }
