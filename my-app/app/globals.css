@@ -24,3 +24,96 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Glassmorphism utility classes */
+.glass-card {
+  background: rgba(15, 23, 42, 0.55);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.glass-card-soft {
+  background: rgba(15, 23, 42, 0.45);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-btn {
+  background: rgba(15, 23, 42, 0.45) !important;
+  border: 1px solid rgba(148, 163, 184, 0.6) !important;
+  color: #e5e7eb !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 150ms ease, border-color 150ms ease,
+    color 150ms ease, transform 150ms ease;
+}
+
+.glass-btn:hover {
+  transform: translateY(-1px);
+}
+
+.glass-btn-primary:hover {
+  background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
+  border-color: #60a5fa !important; /* blue-400 */
+  color: #f9fafb !important;
+}
+
+.glass-btn-secondary:hover {
+  background-color: rgba(16, 185, 129, 0.9) !important; /* emerald-500 */
+  border-color: #34d399 !important; /* emerald-400 */
+  color: #f9fafb !important;
+}
+
+.glass-btn-neutral:hover {
+  background-color: rgba(148, 163, 184, 0.25) !important; /* slate-400 */
+  border-color: #e5e7eb !important;
+  color: #f9fafb !important;
+}
+
+.glass-btn-danger {
+  border-color: rgba(248, 113, 113, 0.6) !important; /* red-400 */
+}
+
+.glass-btn-danger:hover {
+  background-color: rgba(239, 68, 68, 0.95) !important; /* red-500 */
+  border-color: #f97373 !important; /* red-400 */
+  color: #f9fafb !important;
+}
+
+/* Larger arrows for the home-page video carousel */
+.slick-prev:before,
+.slick-next:before {
+  font-size: 32px !important;
+}
+
+.slick-prev {
+  left: -40px;
+}
+
+.slick-next {
+  right: -40px;
+}
+
+/* Horizontal spacing between uploaded videos on landing carousel */
+.slick-slide > div {
+  margin: 0 16px;
+}
+
+/* Keep track aligned with outer card while allowing inner spacing */
+.slick-list {
+  margin: 0 -12px;
+}
+
+/* Make the arrow hitboxes a bit larger for easier clicking */
+.slick-prev,
+.slick-next {
+  width: 40px;
+  height: 40px;
+  z-index: 2;
+}

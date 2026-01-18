@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import {
     Button,
     Dialog,
@@ -21,25 +22,58 @@ import SocialMediaModal from "./SocialMediaModal";
 export default function VideoUpload() {
     const router = useRouter();
 
-    const { originalVideos, addOriginalVideo, removeOriginalVideo } = useOriginalVideoContext();
+    const { originalVideos, addOriginalVideo, removeOriginalVideo } =
+        useOriginalVideoContext();
     const [openModal, setOpenModal] = useState(false);
-
     const sliderSettings = {
         infinite: false,
         slidesToShow: 3,
         slidesToScroll: 3,
         arrows: true,
         draggable: true,
+        centerMode: false,
         responsive: [
-            { breakpoint: 1024, settings: { slidesToShow: 2 } },
-            { breakpoint: 600, settings: { slidesToShow: 1 } },
+            {
+                breakpoint: 1280,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 3,
+                },
+            },
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
+                },
+            },
+            {
+                breakpoint: 600,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                },
+            },
         ],
     };
 
+    const handleFiles = (files: FileList | null) => {
+        if (!files || files.length === 0) return;
+        const vid = files[0];
+        addOriginalVideo(vid);
+    };
+
     const handleAddChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files) return;
-        const vid = e.target.files[0];
-        addOriginalVideo(vid)
+        handleFiles(e.target.files);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        handleFiles(e.dataTransfer.files);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
     };
 
     const handleRemove = (idx: number, url: string) => {
@@ -68,6 +102,7 @@ export default function VideoUpload() {
     return (
         <main
             style={{
+                minHeight: "100vh",
                 padding: "32px 24px",
                 backgroundColor: "#000000",
                 color: "#f9fafb",
@@ -88,54 +123,103 @@ export default function VideoUpload() {
                 }}
             >
                 <Typography variant="h5">Add Videos</Typography>
-                <Button variant="outlined" color="inherit" onClick={openAccountModal}>
+                <Button
+                    variant="outlined"
+                    color="inherit"
+                    className="glass-btn glass-btn-neutral"
+                    onClick={openAccountModal}
+                >
                     Account
                 </Button>
             </div>
 
             {/* Upload Card */}
             <div
+                className="glass-card"
                 style={{
                     width: "100%",
                     maxWidth: 960,
-                    backgroundColor: "rgba(15,23,42,0.45)",
-                    borderRadius: 20,
-                    padding: 20,
-                    border: "1px solid rgba(148,163,184,0.35)",
-                    boxShadow: "0 18px 45px rgba(0,0,0,0.65)",
-                    backdropFilter: "blur(18px)",
-                    WebkitBackdropFilter: "blur(18px)",
+                    padding: 32,
                     display: "flex",
+                    justifyContent: "center",
                     alignItems: "center",
-                    gap: 16,
                 }}
             >
-                <Button variant="contained" component="label">
-                    Add video
-                    <input
-                        type="file"
-                        accept="video/*"
-                        hidden
-                        onChange={handleAddChange}
-                    />
-                </Button>
-                <Typography variant="body2" color="gray">
-                    Upload one or more videos to edit
-                </Typography>
+                <div
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    style={{
+                        width: "100%",
+                        maxWidth: 640,
+                        minHeight: 220,
+                        borderRadius: 24,
+                        border: "1px dashed rgba(148,163,184,0.7)",
+                        background:
+                            "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.82))",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 12,
+                        padding: 24,
+                        textAlign: "center",
+                    }}
+                >
+                    <div
+                        style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 16,
+                            backgroundColor: "rgba(15,23,42,0.9)",
+                            border: "1px solid rgba(148,163,184,0.6)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            marginBottom: 4,
+                        }}
+                    >
+                        <span style={{ fontSize: 24 }}>📁</span>
+                    </div>
+                    <Typography variant="h6" component="h2">
+                        Create a new project
+                    </Typography>
+                    <Typography variant="body2" color="gray">
+                        Drag and drop video files to upload
+                    </Typography>
+                    <Typography
+                        variant="body2"
+                        color="gray"
+                        style={{ fontSize: 12, marginTop: 4 }}
+                    >
+                        Your video will be private until you publish your project.
+                    </Typography>
+                    <div style={{ marginTop: 12 }}>
+                        <Button
+                            variant="outlined"
+                            color="inherit"
+                            className="glass-btn glass-btn-primary"
+                            component="label"
+                        >
+                            Select files
+                            <input
+                                type="file"
+                                accept="video/*"
+                                hidden
+                                onChange={handleAddChange}
+                                multiple
+                            />
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             {/* Video Carousel Card */}
             <div
+                className="glass-card-soft"
                 style={{
                     width: "100%",
                     maxWidth: 960,
-                    backgroundColor: "rgba(15,23,42,0.45)",
-                    borderRadius: 20,
                     padding: 20,
-                    border: "1px solid rgba(148,163,184,0.35)",
-                    boxShadow: "0 18px 45px rgba(0,0,0,0.65)",
-                    backdropFilter: "blur(18px)",
-                    WebkitBackdropFilter: "blur(18px)",
                 }}
             >
                 <Typography variant="subtitle1" gutterBottom>

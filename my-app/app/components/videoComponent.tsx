@@ -24,11 +24,9 @@ export default function VideoComponent({url, index, removeCallback, uploadCallba
         <div>
             <div
                 style={{
-                    width: "300px",
-                    height: "200px",
+                    width: "320px",
+                    aspectRatio: "9 / 16",
                     backgroundColor: "#000",
-                    display: "inline-block", // for horizontal scroll
-                    marginRight: "16px",
                     borderRadius: 4,
                     overflow: "hidden",
                 }}
@@ -36,21 +34,34 @@ export default function VideoComponent({url, index, removeCallback, uploadCallba
                 <video
                     src={url}
                     controls
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
                 />
             </div>
             <div
                 style={{
                     display: "flex",
-                    width: "300px",
+                    width: "320px",
                     justifyContent: "space-between",
-                    padding: "10px"
+                    gap: 8,
+                    paddingTop: 6,
                 }}
             >
-                <Button variant="contained" onClick={handleUpdate}>
+                <Button
+                    variant="outlined"
+                    color="inherit"
+                    className="glass-btn glass-btn-primary"
+                    size="small"
+                    onClick={handleUpdate}
+                >
                     Edit
                 </Button>
-                <Button variant="contained" color="error" onClick={handleRemove}>
+                <Button
+                    variant="outlined"
+                    color="inherit"
+                    className="glass-btn glass-btn-danger"
+                    size="small"
+                    onClick={handleRemove}
+                >
                     Remove
                 </Button>
             </div>

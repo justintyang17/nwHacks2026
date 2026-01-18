@@ -72,21 +72,57 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(arrayBuffer);
   await writeFile(originalFilePath, buffer);
 
-  // 2. Run AI face detection + blurring (to be implemented)
-  //    Here you would call your AI/ML pipeline (Python script, external API, etc.)
-  //    that takes `originalFilePath` as input and writes a blurred version,
-  //    then returns the path to that processed file.
+  // 2. Run AI face detection + blurring.
+  //    We first write a blurred video (video-only) via Python, then remux
+  //    the original audio back in using ffmpeg so we don't lose sound.
   const blurredFileName = `blurred-${id}.${extension}`;
   const blurredFilePath = path.join(uploadDir, blurredFileName);
+  const blurredVideoOnlyPath = path.join(
+    uploadDir,
+    `blurred-videoonly-${id}.${extension}`
+  );
 
   console.log("[/api/upload] Starting blurFacesInVideo", {
     inputPath: originalFilePath,
-    outputPath: blurredFilePath,
+    outputPath: blurredVideoOnlyPath,
   });
 
-   await blurFacesInVideo(originalFilePath, blurredFilePath);
+  // 2a. Blur faces into a temporary video-only file.
+  await blurFacesInVideo(originalFilePath, blurredVideoOnlyPath);
+  console.log("[/api/upload] Finished blurFacesInVideo, restoring audio track");
 
-  console.log("[/api/upload] Finished blurFacesInVideo");
+  // 2b. Use ffmpeg to copy the blurred video stream and the original audio
+  //     into the final blurredFilePath, so audio is preserved.
+  try {
+    const { stdout, stderr } = await execFileAsync("ffmpeg", [
+      "-y",
+      "-i",
+      blurredVideoOnlyPath,
+      "-i",
+      originalFilePath,
+      "-map",
+      "0:v:0",
+      "-map",
+      "1:a:0",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      blurredFilePath,
+    ]);
+
+    if (stdout) {
+      console.log("[/api/upload ffmpeg stdout]", stdout.toString());
+    }
+    if (stderr) {
+      console.log("[/api/upload ffmpeg stderr]", stderr.toString());
+    }
+  } catch (err) {
+    console.error(
+      "[/api/upload] ffmpeg remux (restore audio) failed, falling back to video-only blurred clip",
+      err
+    );
+  }
 
 
 
@@ -162,7 +198,10 @@ async function blurFacesInVideo(
   const scriptPath = path.join(process.cwd(), "scripts", "blur_faces.py");
 
   // Cross-platform virtualenv python path
-  const pythonPath = path.join(process.cwd(), ".venv", "bin", "python3");
+  const pythonPath =
+    process.platform === "win32"
+      ? path.join(process.cwd(), ".venv", "Scripts", "python.exe")
+      : path.join(process.cwd(), ".venv", "bin", "python3");
 
   // Call the Python script in the project virtual environment to blur faces
   const { stdout, stderr } = await execFileAsync(pythonPath, [

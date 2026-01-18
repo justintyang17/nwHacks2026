@@ -164,7 +164,9 @@ export async function POST(req: Request) {
       segments = await translateSegmentsWithOpenAI(segments, lang);
     }
 
-    return NextResponse.json({ success: true, segments });
+    const sourceVideoUrl = `/uploads/${inputFileName}`;
+
+    return NextResponse.json({ success: true, segments, sourceVideoUrl });
   } catch (err) {
     console.error("[/api/subtitles] error", err);
     return NextResponse.json(

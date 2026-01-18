@@ -27,15 +27,18 @@ export default function EditPage() {
   const [subtitleLang, setSubtitleLang] = useState<string>("en");
   const [isBlurring, setIsBlurring] = useState(false);
   const [isGeneratingSubs, setIsGeneratingSubs] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [blurredUrl, setBlurredUrl] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
   const [transcript, setTranscript] = useState<string | null>(null);
-  const [subtitleSegments, setSubtitleSegments] = useState<SubtitleSegment[]>(
-    []
-  );
-  const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
+  const [subtitleSegments, setSubtitleSegments] = useState<SubtitleSegment[]>([]);
+  const [subtitleSourceVideoUrl, setSubtitleSourceVideoUrl] =
+    useState<string | null>(null);
+  const [generatedSubtitleLang, setGeneratedSubtitleLang] =
+    useState<string | null>(null);
+  const [subtitleVttUrl, setSubtitleVttUrl] = useState<string | null>(null);
 
   const { addEditedVideo } = useEditedVideoContext();
 
@@ -48,7 +51,19 @@ export default function EditPage() {
     setVideoFile(getSelectedVideoFile());
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (subtitleVttUrl && typeof window !== "undefined") {
+        URL.revokeObjectURL(subtitleVttUrl);
+      }
+    };
+  }, [subtitleVttUrl]);
+
   const handleApplyBlur = async () => {
+    // Avoid re-blurring the same video multiple times.
+    if (blurredUrl) {
+      return;
+    }
     if (!videoFile) {
       setError("No video file available to send to backend.");
       return;
@@ -90,6 +105,10 @@ export default function EditPage() {
   };
 
   const handleGenerateSubtitles = async () => {
+    // If we already have subtitles for this language, don't regenerate.
+    if (subtitleSegments.length > 0 && generatedSubtitleLang === subtitleLang) {
+      return;
+    }
     if (!videoFile) {
       setError("No video file available to generate subtitles.");
       return;
@@ -116,6 +135,7 @@ export default function EditPage() {
         success?: boolean;
         segments?: SubtitleSegment[];
         error?: string;
+        sourceVideoUrl?: string;
       };
 
       if (!data.success || !data.segments || !data.segments.length) {
@@ -127,7 +147,44 @@ export default function EditPage() {
         data.segments.map((seg) => seg.text).join(" ").trim() || null
       );
       setSubtitleSegments(data.segments);
-      setCurrentSubtitleIndex(0);
+      setGeneratedSubtitleLang(subtitleLang);
+      if (data.sourceVideoUrl) {
+        setSubtitleSourceVideoUrl(data.sourceVideoUrl);
+      }
+
+      // Build a WebVTT file for the <track> element so subtitles also show
+      // when the user puts the video into fullscreen.
+      if (typeof window !== "undefined") {
+        if (subtitleVttUrl) {
+          URL.revokeObjectURL(subtitleVttUrl);
+        }
+
+        const toVttTime = (seconds: number) => {
+          const totalMs = Math.round(seconds * 1000);
+          const ms = totalMs % 1000;
+          const totalSeconds = Math.floor(totalMs / 1000);
+          const s = totalSeconds % 60;
+          const m = Math.floor(totalSeconds / 60) % 60;
+          const h = Math.floor(totalSeconds / 3600);
+
+          const pad = (n: number, size: number = 2) =>
+            n.toString().padStart(size, "0");
+          return `${pad(h)}:${pad(m)}:${pad(s)}.${pad(ms, 3)}`;
+        };
+
+        let vtt = "WEBVTT\n\n";
+        data.segments.forEach((seg, idx) => {
+          const text = (seg.text || "").trim();
+          if (!text) return;
+          const start = toVttTime(seg.start);
+          const end = toVttTime(seg.end);
+          vtt += `${idx + 1}\n${start} --> ${end}\n${text}\n\n`;
+        });
+
+        const blob = new Blob([vtt], { type: "text/vtt" });
+        const url = URL.createObjectURL(blob);
+        setSubtitleVttUrl(url);
+      }
     } catch {
       setError("Subtitle generation failed. Please try again.");
     } finally {
@@ -139,37 +196,84 @@ export default function EditPage() {
     // No-op for now; we rely directly on backend segment timings.
   };
 
-  const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
-    if (subtitleSegments.length === 0) return;
-    const t = event.currentTarget.currentTime;
+  const saveVideo = async () => {
+    if (isSaving) return;
+    setError(null);
 
-    let idx = subtitleSegments.findIndex(
-      (seg) => t >= seg.start && t < seg.end
-    );
-    if (idx === -1 && t >= subtitleSegments[subtitleSegments.length - 1].end) {
-      idx = subtitleSegments.length - 1;
-    }
-
-    if (idx !== currentSubtitleIndex) {
-      setCurrentSubtitleIndex(idx);
-    }
-  };
-
-  const saveVideo = () => {
-    const finalUrl = blurredUrl ?? previewUrl;
-    if (!finalUrl) {
+    const basePreviewUrl = blurredUrl ?? previewUrl;
+    if (!basePreviewUrl) {
       setError("No edited video to save.");
       return;
     }
 
-    addEditedVideo({
-      url: finalUrl,
-      // Only attach subtitles/transcript if they exist.
-      subtitles: subtitleSegments.length ? subtitleSegments : undefined,
-      transcript: transcript ?? undefined,
-      language: subtitleLang,
-    });
-    router.push("/clips");
+    try {
+      setIsSaving(true);
+      let finalUrl = basePreviewUrl;
+
+      // If we have subtitles, burn them into the actual video file on the server
+      // so downloads/shares include the text.
+      const alreadySubbed =
+        typeof finalUrl === "string" && finalUrl.includes("/uploads/subbed-");
+
+      if (subtitleSegments.length > 0 && !alreadySubbed) {
+        const videoUrlForBurn = blurredUrl ?? subtitleSourceVideoUrl;
+
+        if (!videoUrlForBurn) {
+          setError(
+            "Unable to export subtitles: missing server video file. Try generating subtitles again."
+          );
+        } else {
+          const res = await fetch("/api/burn-subtitles", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              videoUrl: videoUrlForBurn,
+              segments: subtitleSegments,
+            }),
+          });
+
+          if (!res.ok) {
+            setError("Failed to bake subtitles into the video.");
+          } else {
+            const data = (await res.json()) as {
+              success?: boolean;
+              videoUrl?: string;
+              error?: string;
+            };
+            if (!data.success || !data.videoUrl) {
+              setError(
+                data.error || "Failed to bake subtitles into the video."
+              );
+            } else {
+              finalUrl = data.videoUrl;
+            }
+          }
+        }
+      }
+
+      addEditedVideo({
+        url: finalUrl,
+        // Keep subtitle metadata so we can still show transcript text in-app
+        // if desired, even though the subtitles are baked into the video file.
+        subtitles: subtitleSegments.length ? subtitleSegments : undefined,
+        transcript: transcript ?? undefined,
+        language: subtitleLang,
+      });
+
+      // Persist the final URL so if the user comes back to this page later,
+      // the baked version is what they see.
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("videoToEditUrl", finalUrl);
+      }
+
+      router.push("/clips");
+    } catch {
+      setError("Failed to save edited video.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -211,20 +315,17 @@ export default function EditPage() {
           width: "100%",
           maxWidth: 960,
           display: "grid",
-          gridTemplateColumns: "minmax(0, 3fr) minmax(0, 2fr)",
-          gap: 24,
+          gridTemplateColumns: "minmax(0, 1.7fr) minmax(0, 1.3fr)",
+          columnGap: 24,
+          rowGap: 24,
+          alignItems: "flex-start",
         }}
       >
         {/* Left: video preview */}
         <div
+          className="glass-card"
           style={{
-            backgroundColor: "rgba(15,23,42,0.45)",
-            borderRadius: 20,
             padding: 20,
-            border: "1px solid rgba(148, 163, 184, 0.4)",
-            boxShadow: "0 18px 45px rgba(0, 0, 0, 0.65)",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
             display: "flex",
             flexDirection: "column",
             gap: 16,
@@ -266,44 +367,26 @@ export default function EditPage() {
                 src={blurredUrl ?? previewUrl ?? undefined}
                 controls
                 onLoadedMetadata={handleLoadedMetadata}
-                onTimeUpdate={handleTimeUpdate}
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              />
+              >
+                {subtitleVttUrl && (
+                  <track
+                    kind="subtitles"
+                    src={subtitleVttUrl}
+                    srcLang={subtitleLang}
+                    label="Subtitles"
+                    default
+                  />
+                )}
+              </video>
             ) : (
               <Typography variant="body2" color="gray">
                 No video selected. Choose a video to edit.
               </Typography>
             )}
 
-            {subtitleSegments.length > 0 && currentSubtitleIndex >= 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  right: 0,
-                  bottom: 12,
-                  display: "flex",
-                  justifyContent: "center",
-                  pointerEvents: "none",
-                }}
-              >
-                <div
-                  style={{
-                    maxWidth: "90%",
-                    padding: "6px 10px",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    borderRadius: 8,
-                    color: "#f9fafb",
-                    textAlign: "center",
-                    fontSize: 14,
-                    fontFamily:
-                      "'Noto Sans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {subtitleSegments[currentSubtitleIndex]?.text}
-                </div>
-              </div>
-            )}
+            {/* No extra CSS overlay; subtitles are provided via <track> so they
+                work consistently in fullscreen and normal modes. */}
           </div>
 
           {error && (
@@ -334,17 +417,7 @@ export default function EditPage() {
           }}
         >
           {/* Blur faces card */}
-          <div
-            style={{
-              backgroundColor: "rgba(15,23,42,0.45)",
-              borderRadius: 20,
-              padding: 16,
-              border: "1px solid rgba(148, 163, 184, 0.35)",
-              boxShadow: "0 12px 30px rgba(0, 0, 0, 0.7)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
+          <div className="glass-card-soft" style={{ padding: 16 }}>
             <Typography variant="subtitle1" gutterBottom>
               Face blurring
             </Typography>
@@ -356,8 +429,9 @@ export default function EditPage() {
               Blur all detected faces in the video to protect identities.
             </Typography>
             <Button
-              variant="contained"
-              color="primary"
+              variant="outlined"
+              color="inherit"
+              className="glass-btn glass-btn-primary"
               disabled={!previewUrl}
               onClick={handleApplyBlur}
             >
@@ -366,17 +440,7 @@ export default function EditPage() {
           </div>
 
           {/* Subtitles card */}
-          <div
-            style={{
-              backgroundColor: "rgba(15,23,42,0.45)",
-              borderRadius: 20,
-              padding: 16,
-              border: "1px solid rgba(148, 163, 184, 0.35)",
-              boxShadow: "0 12px 30px rgba(0, 0, 0, 0.7)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
+          <div className="glass-card-soft" style={{ padding: 16 }}>
             <Typography variant="subtitle1" gutterBottom>
               Subtitles
             </Typography>
@@ -414,24 +478,39 @@ export default function EditPage() {
             </div>
             <Button
               variant="outlined"
+              className="glass-btn glass-btn-secondary"
               disabled={!previewUrl || isGeneratingSubs}
               onClick={handleGenerateSubtitles}
+              startIcon={
+                isGeneratingSubs ? <CircularProgress size={16} /> : undefined
+              }
             >
               {isGeneratingSubs ? "Generating..." : "Generate subtitles"}
             </Button>
 
             {transcript && (
-              <Typography
-                variant="body2"
+              <div
                 style={{
                   marginTop: 12,
-                  whiteSpace: "pre-wrap",
-                  fontFamily:
-                    "'Noto Sans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  padding: 8,
+                  borderRadius: 12,
+                  backgroundColor: "rgba(15,23,42,0.85)",
+                  border: "1px solid rgba(148,163,184,0.35)",
                 }}
               >
-                {transcript}
-              </Typography>
+                <Typography
+                  variant="body2"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    fontFamily:
+                      "'Noto Sans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {transcript}
+                </Typography>
+              </div>
             )}
           </div>
         </div>
@@ -443,17 +522,26 @@ export default function EditPage() {
           width: "100%",
           maxWidth: 960,
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent: "space-between",
           marginTop: 8,
         }}
       >
         <Button
           variant="outlined"
           color="inherit"
-          onClick={saveVideo}
-          disabled={!previewUrl}
+          className="glass-btn glass-btn-neutral"
+          onClick={() => router.push("/clips")}
         >
-          Finish
+          Go to clips
+        </Button>
+        <Button
+          variant="outlined"
+          color="inherit"
+          className="glass-btn glass-btn-primary"
+          onClick={saveVideo}
+          disabled={!previewUrl || isSaving}
+        >
+          {isSaving ? <CircularProgress size={18} /> : "Finish"}
         </Button>
       </div>
     </main>

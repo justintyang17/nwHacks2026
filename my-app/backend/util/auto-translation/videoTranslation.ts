@@ -52,10 +52,11 @@ export class videoTranscription {
                 console.log("Audio is still being dubbed...");
               }
               // Wait 5 seconds between checks
-              await new Promise((resolve) => setTimeout(resolve, 5000));
+             await new Promise((resolve) => setTimeout(resolve, 5000));
         }
-    
     }
+
+    
 
     public translateCaption(caption : string) {
         
