@@ -8,13 +8,21 @@ import {
   Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSelectedVideoFile } from "../components/videoStore";
 
 import { useEditedVideoContext } from "../context/EditedVideoContext";
 
+type SubtitleSegment = {
+  text: string;
+  start: number;
+  end: number;
+};
+
 export default function EditPage() {
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [subtitleLang, setSubtitleLang] = useState<string>("en");
   const [isBlurring, setIsBlurring] = useState(false);
@@ -23,8 +31,13 @@ export default function EditPage() {
   const [blurredUrl, setBlurredUrl] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
-  const { addEditedVideo } = useEditedVideoContext();
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [subtitleSegments, setSubtitleSegments] = useState<SubtitleSegment[]>(
+    []
+  );
+  const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState(0);
 
+  const { addEditedVideo } = useEditedVideoContext();
 
   // Assume the video was chosen on the landing page and its URL
   // (or some identifier) was stored in sessionStorage.
@@ -77,16 +90,44 @@ export default function EditPage() {
   };
 
   const handleGenerateSubtitles = async () => {
-    if (!previewUrl) {
-      setError("No video available to generate subtitles.");
+    if (!videoFile) {
+      setError("No video file available to generate subtitles.");
       return;
     }
     setError(null);
     setIsGeneratingSubs(true);
 
     try {
-      // Placeholder: call your subtitles backend when it's ready.
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const formData = new FormData();
+      formData.append("video", videoFile);
+      formData.append("lang", subtitleLang);
+
+      const res = await fetch("/api/subtitles", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        setError("Subtitle generation failed. Please try again.");
+        return;
+      }
+
+      const data = (await res.json()) as {
+        success?: boolean;
+        segments?: SubtitleSegment[];
+        error?: string;
+      };
+
+      if (!data.success || !data.segments || !data.segments.length) {
+        setError(data.error || "Subtitle generation failed. Please try again.");
+        return;
+      }
+
+      setTranscript(
+        data.segments.map((seg) => seg.text).join(" ").trim() || null
+      );
+      setSubtitleSegments(data.segments);
+      setCurrentSubtitleIndex(0);
     } catch {
       setError("Subtitle generation failed. Please try again.");
     } finally {
@@ -94,12 +135,42 @@ export default function EditPage() {
     }
   };
 
-  const saveVideo = () => {
-    if(videoFile) {
-        addEditedVideo(videoFile);
-        router.push("/clips")
+  const handleLoadedMetadata = () => {
+    // No-op for now; we rely directly on backend segment timings.
+  };
+
+  const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (subtitleSegments.length === 0) return;
+    const t = event.currentTarget.currentTime;
+
+    let idx = subtitleSegments.findIndex(
+      (seg) => t >= seg.start && t < seg.end
+    );
+    if (idx === -1 && t >= subtitleSegments[subtitleSegments.length - 1].end) {
+      idx = subtitleSegments.length - 1;
     }
-  }
+
+    if (idx !== currentSubtitleIndex) {
+      setCurrentSubtitleIndex(idx);
+    }
+  };
+
+  const saveVideo = () => {
+    const finalUrl = blurredUrl ?? previewUrl;
+    if (!finalUrl) {
+      setError("No edited video to save.");
+      return;
+    }
+
+    addEditedVideo({
+      url: finalUrl,
+      // Only attach subtitles/transcript if they exist.
+      subtitles: subtitleSegments.length ? subtitleSegments : undefined,
+      transcript: transcript ?? undefined,
+      language: subtitleLang,
+    });
+    router.push("/clips");
+  };
 
   return (
     <main
@@ -189,22 +260,49 @@ export default function EditPage() {
                   Processing video...
                 </Typography>
               </div>
-            ) : blurredUrl ? (
+            ) : blurredUrl || previewUrl ? (
               <video
-                src={blurredUrl}
+                ref={videoRef}
+                src={blurredUrl ?? previewUrl ?? undefined}
                 controls
-                style={{ width: "100%", height: "100%", objectFit: "contain" }}
-              />
-            ) : previewUrl ? (
-              <video
-                src={previewUrl}
-                controls
+                onLoadedMetadata={handleLoadedMetadata}
+                onTimeUpdate={handleTimeUpdate}
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             ) : (
               <Typography variant="body2" color="gray">
                 No video selected. Choose a video to edit.
               </Typography>
+            )}
+
+            {subtitleSegments.length > 0 && currentSubtitleIndex >= 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 12,
+                  display: "flex",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                }}
+              >
+                <div
+                  style={{
+                    maxWidth: "90%",
+                    padding: "6px 10px",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    borderRadius: 8,
+                    color: "#f9fafb",
+                    textAlign: "center",
+                    fontSize: 14,
+                    fontFamily:
+                      "'Noto Sans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  }}
+                >
+                  {subtitleSegments[currentSubtitleIndex]?.text}
+                </div>
+              </div>
             )}
           </div>
 
@@ -225,7 +323,6 @@ export default function EditPage() {
               will appear here automatically.
             </Typography>
           )}
-
         </div>
 
         {/* Right: edit options */}
@@ -281,15 +378,15 @@ export default function EditPage() {
             }}
           >
             <Typography variant="subtitle1" gutterBottom>
-              Subtitles (coming soon)
+              Subtitles
             </Typography>
             <Typography
               variant="body2"
               color="gray"
               style={{ marginBottom: 12 }}
             >
-              Select the language you want subtitles in. Subtitle generation
-              logic will be plugged in here later.
+              Select the language you want subtitles in. Subtitles are
+              generated using AI with accurate timing.
             </Typography>
             <div
               style={{
@@ -317,10 +414,25 @@ export default function EditPage() {
             </div>
             <Button
               variant="outlined"
-              disabled={!previewUrl}
+              disabled={!previewUrl || isGeneratingSubs}
+              onClick={handleGenerateSubtitles}
             >
               {isGeneratingSubs ? "Generating..." : "Generate subtitles"}
             </Button>
+
+            {transcript && (
+              <Typography
+                variant="body2"
+                style={{
+                  marginTop: 12,
+                  whiteSpace: "pre-wrap",
+                  fontFamily:
+                    "'Noto Sans', 'Noto Sans SC', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {transcript}
+              </Typography>
+            )}
           </div>
         </div>
       </div>
@@ -338,7 +450,6 @@ export default function EditPage() {
         <Button
           variant="outlined"
           color="inherit"
-          // TODO: wire this to a page that lists edited clips
           onClick={saveVideo}
           disabled={!previewUrl}
         >
@@ -348,5 +459,4 @@ export default function EditPage() {
     </main>
   );
 }
-
 

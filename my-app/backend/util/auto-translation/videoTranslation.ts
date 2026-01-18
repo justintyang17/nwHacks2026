@@ -1,11 +1,13 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import { SpeechToTextConvertRequestEntityDetection, SpeechToTextConvertResponse } from "@elevenlabs/elevenlabs-js/api";
-import dotenv from 'dotenv';
-import * as ffmpeg from 'fluent-ffmpeg';
+import {
+  SpeechToTextConvertRequestEntityDetection,
+  SpeechToTextConvertResponse,
+} from "@elevenlabs/elevenlabs-js/api";
+import * as ffmpeg from "fluent-ffmpeg";
 
 
 
-export class videoTranscription{
+export class videoTranscription {
 
     /*
     videoTranscription class
@@ -17,12 +19,13 @@ export class videoTranscription{
 
     */
 
-    private elevenLabs : ElevenLabsClient;
+    private elevenLabs: ElevenLabsClient;
 
     public constructor() {
         this.elevenLabs = new ElevenLabsClient({
-            apiKey: process.env.apikey
-        })
+            // Next.js will load ELEVENLABS_API_KEY from .env.local
+            apiKey: process.env.ELEVENLABS_API_KEY,
+        });
     }
 
     public async transcribe(videoFile : File) {
@@ -52,11 +55,7 @@ export class videoTranscription{
         })
 
         return dubbed;
-
-
     }
 
     
-
-
 }

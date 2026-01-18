@@ -24,11 +24,21 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        {/* Wide-coverage fonts so translated subtitles render correctly */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&display=swap"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600&display=swap"
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <OriginalVideoProvider>
-          <EditedVideoProvider>
-            {children}
-          </EditedVideoProvider>
+          <EditedVideoProvider>{children}</EditedVideoProvider>
         </OriginalVideoProvider>
       </body>
     </html>
