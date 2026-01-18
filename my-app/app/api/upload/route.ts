@@ -91,10 +91,7 @@ async function blurFacesInVideo(
   const scriptPath = path.join(process.cwd(), "scripts", "blur_faces.py");
 
   // Cross-platform virtualenv python path
-  const pythonPath =
-    process.platform === "win32"
-      ? path.join(process.cwd(), ".venv", "Scripts", "python.exe")
-      : path.join(process.cwd(), ".venv", "bin", "python3");
+  const pythonPath = path.join(process.cwd(), ".venv", "bin", "python");
 
   // Call the Python script in the project virtual environment to blur faces
   const { stdout, stderr } = await execFileAsync(pythonPath, [

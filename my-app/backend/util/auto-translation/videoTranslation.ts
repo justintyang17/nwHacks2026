@@ -54,7 +54,7 @@ export class videoTranscription {
             targetLang: "en",
         })
         if ("dubbing_id" in dubbed && "language_code" in dubbed && "srt" in dubbed) {
-            const transcript = this.elevenLabs.dubbing.transcripts.get(dubbed["dubbing_id"] as string , dubbed["language_code"] as string, dubbed["srt"] as string)
+            const transcript = this.elevenLabs.dubbing.transcripts.get(dubbed["dubbing_id"] as string , dubbed["language_code"] as string, "srt")
             return transcript;
         }
 
