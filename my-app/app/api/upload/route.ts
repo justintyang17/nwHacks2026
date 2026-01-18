@@ -65,6 +65,7 @@ export async function POST(req: Request) {
   return NextResponse.json({
     success: true,
     blurredVideoUrl,
+    
   });
 }
 
@@ -82,17 +83,14 @@ async function blurFacesInVideo(
   outputPath: string
 ): Promise<void> {
   const scriptPath = path.join(process.cwd(), "scripts", "blur_faces.py");
-  const pythonPath = path.join(
-    process.cwd(),
-    ".venv",
-    "Scripts",
-    "python.exe"
-  );
 
-  
+  // Cross-platform virtualenv python path
+  const pythonPath =
+    process.platform === "win32"
+      ? path.join(process.cwd(), ".venv", "Scripts", "python.exe")
+      : path.join(process.cwd(), ".venv", "bin", "python3");
 
-  // Call the Python script in the project virtual environment that uses MediaPipe
-  // to blur faces in the video.
+  // Call the Python script in the project virtual environment to blur faces
   const { stdout, stderr } = await execFileAsync(pythonPath, [
     scriptPath,
     inputPath,
