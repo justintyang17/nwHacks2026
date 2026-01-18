@@ -2,13 +2,16 @@
 "use client";
 
 import { Button } from "@mui/material";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Slider from "react-slick";
 import VideoComponent from "./videoComponent";
+import { setSelectedVideoFile } from "./videoStore";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 export default function VideoUpload() {
+    const router = useRouter();
     const [videos, setVideos] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [currVideo, setCurrVideo] = useState<File | null>(null);
@@ -54,25 +57,27 @@ export default function VideoUpload() {
 
         const urls = videos.map((video) => URL.createObjectURL(video));
         setPreviewUrls(urls);
-
-        // Cleanup to avoid memory leaks
-        return () => urls.forEach((url) => URL.revokeObjectURL(url));
     }, [videos]);
 
-    // Upload Button
-    const handleUpload = async (idx: number, url: string) => {
+    // "Upload for editing" now routes to the edit page instead of
+    // immediately sending the video to the backend.
+    const handleUpload = (idx: number, url: string) => {
         const video = videos[idx];
         if (!video) {
-            console.log("upload ERROR")
+            console.log("upload ERROR");
             return;
         }
-        const formData = new FormData();
-        formData.append("video", video);
 
-        await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-        });
+        // Save the selected file in memory so the edit page can send
+        // it to the backend when the user applies changes.
+        setSelectedVideoFile(video);
+
+        // Save the preview URL so the edit page can show the video.
+        if (typeof window !== "undefined") {
+            sessionStorage.setItem("videoToEditUrl", url);
+        }
+
+        router.push("/edit");
     };
 
     return (
