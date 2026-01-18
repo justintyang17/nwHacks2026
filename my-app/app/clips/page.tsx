@@ -9,6 +9,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import Grid from "@mui/material/Grid";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -208,14 +209,49 @@ export default function ClipsPage() {
       </div>
 
       {/* Post modal */}
-      <Dialog open={postModal} onClose={closePostModal} maxWidth="sm" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={postModal}
+        onClose={closePostModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: "#000000",
+            color: "#f9fafb",
+            borderRadius: 3,
+            border: "1px solid rgba(148,163,184,0.4)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 6,
+          }}
+        >
           Create a Post
           <IconButton
             onClick={closePostModal}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+            sx={{
+              position: "absolute",
+              right: 12,
+              top: 10,
+              borderRadius: "999px",
+              border: "1px solid rgba(148,163,184,0.6)",
+              color: "#e5e7eb",
+              padding: "4px",
+              backgroundColor: "rgba(15,23,42,0.85)",
+              transition: "all 150ms ease",
+              "&:hover": {
+                backgroundColor: "rgba(239,68,68,0.95)",
+                borderColor: "rgba(248,113,113,0.9)",
+                color: "#f9fafb",
+              },
+            }}
           >
-            X
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
         <DialogContent>
@@ -225,13 +261,35 @@ export default function ClipsPage() {
 
       {/* Accounts modal */}
       <Dialog open={accountModal} onClose={closeAccountModal} maxWidth="sm" fullWidth>
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 6,
+          }}
+        >
           Accounts
           <IconButton
             onClick={closeAccountModal}
-            sx={{ position: "absolute", right: 8, top: 8 }}
+            sx={{
+              position: "absolute",
+              right: 12,
+              top: 10,
+              borderRadius: "999px",
+              border: "1px solid rgba(148,163,184,0.6)",
+              color: "#e5e7eb",
+              padding: "4px",
+              backgroundColor: "rgba(15,23,42,0.85)",
+              transition: "all 150ms ease",
+              "&:hover": {
+                backgroundColor: "rgba(239,68,68,0.95)",
+                borderColor: "rgba(248,113,113,0.9)",
+                color: "#f9fafb",
+              },
+            }}
           >
-            X
+            <CloseIcon fontSize="small" />
           </IconButton>
         </DialogTitle>
         <DialogContent>

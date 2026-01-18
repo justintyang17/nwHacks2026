@@ -76,20 +76,29 @@ const handleConnect = async (platform: Platform) => {
   };
 
   return (
-    <form>
+    <form
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        backgroundColor: "transparent",
+        color: "#f9fafb",
+      }}
+    >
       <div>
         {platforms.map((platform) => (
           <div
             key={platform}
+            className="glass-card-soft"
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               padding: "12px 16px",
-              border: "1px solid rgba(148,163,184,0.5)",
-              borderRadius: 8,
-              marginBottom: 12,
-              backgroundColor: "rgba(15,23,42,0.2)",
+              borderRadius: 14,
+              marginBottom: 10,
+              background: "rgba(37, 99, 235, 0.35)", // blue glass
+              border: "1px solid rgba(96, 165, 250, 0.7)",
             }}
           >
             <div
@@ -105,7 +114,15 @@ const handleConnect = async (platform: Platform) => {
               </h3>
             </div>
 
-            <Button variant="contained" onClick={() => handleConnect(platform)}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              size="small"
+              className={`glass-btn ${
+                connected[platform] ? "glass-btn-neutral" : "glass-btn-primary"
+              }`}
+              onClick={() => handleConnect(platform)}
+            >
               {connected[platform] ? "Change Account" : "Add Account"}
             </Button>
           </div>

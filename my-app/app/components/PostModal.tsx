@@ -77,15 +77,26 @@ const handlePost = () => {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 12,
+        gap: 14,
         width: "100%",
+        color: "#f9fafb",
       }}
     >
       <div
         style={{
+          fontSize: 14,
+          color: "rgba(148,163,184,0.9)",
+          textAlign: "center",
+        }}
+      >
+        Choose a platform and add a caption to share your clip.
+      </div>
+
+      <div
+        style={{
           display: "flex",
           alignItems: "center",
-          gap: 16,
+          gap: 12,
           flexWrap: "wrap",
           justifyContent: "center",
         }}
@@ -93,10 +104,19 @@ const handlePost = () => {
         {platforms.map((platform) => (
           <Button
             key={platform}
-            variant="contained"
-            disabled={postPlatform === platform || !connected[platform]}
+            variant="outlined"
+            color="inherit"
+            size="small"
+            className={`glass-btn ${
+              postPlatform === platform ? "glass-btn-primary" : "glass-btn-neutral"
+            }`}
+            disabled={!connected[platform]}
             onClick={() => setPostPlatform(platform)}
             aria-label={platform}
+            sx={{
+              minWidth: 48,
+              padding: "6px 10px",
+            }}
           >
             {platformIcons[platform]}
           </Button>
@@ -111,14 +131,34 @@ const handlePost = () => {
         placeholder="Write your caption here..."
         variant="outlined"
         fullWidth
-        sx={{ maxWidth: 500 }}
+        sx={{
+          maxWidth: 500,
+          "& .MuiOutlinedInput-root": {
+            backgroundColor: "rgba(15,23,42,0.85)",
+            color: "#e5e7eb",
+            "& fieldset": {
+              borderColor: "rgba(148,163,184,0.6)",
+            },
+            "&:hover fieldset": {
+              borderColor: "#60a5fa",
+            },
+            "&.Mui-focused fieldset": {
+              borderColor: "#60a5fa",
+            },
+          },
+          "& .MuiInputBase-input::placeholder": {
+            color: "rgba(148,163,184,0.9)",
+          },
+        }}
       />
 
       <Button
-        variant="contained"
+        variant="outlined"
+        color="inherit"
+        className="glass-btn glass-btn-primary"
         disabled={!postPlatform}
         onClick={handlePost}
-        sx={{ marginTop: 12 }}
+        sx={{ marginTop: 8 }}
       >
         {postPlatform ? `Post on ${postPlatform}` : "Select a platform"}
       </Button>
