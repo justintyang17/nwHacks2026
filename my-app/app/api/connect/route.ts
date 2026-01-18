@@ -21,16 +21,7 @@ export async function POST(req: Request) {
               );
         }
 
-        const accountResponse = await fetch('https://getlate.dev/api/v1/accounts', {
-            method: "GET",
-            headers: {
-              'Authorization': `Bearer ${process.env.lateKey}`
-            }
-          });
-          
-          const { accounts } = await accountResponse.json();
-          
-          console.log('Connected accounts:', accounts);
+
     
 
         // if (platform in accounts.filter((account : any) => {

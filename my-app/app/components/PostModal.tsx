@@ -2,89 +2,115 @@
 
 import { Button, TextField } from "@mui/material";
 import { Platform, useSocialMediaContext } from "../context/SocialMediaContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PostModalComponentProps {
   postCallback: (platform: Platform, caption: string) => void;
 }
 
-export default function PostModal({postCallback}: PostModalComponentProps) {
+export default function PostModal({ postCallback }: PostModalComponentProps) {
+  const { accounts } = useSocialMediaContext();
+  const [postPlatform, setPostPlatform] = useState<Platform | null>(null);
+  const [caption, setCaption] = useState("");
 
-    const { accounts, setAccount } = useSocialMediaContext();
-    const [postPlatform, setPostPlatform] = useState<Platform | null>(null);
-    const [caption, setCaption] = useState("");
+  const platforms: Platform[] = ["twitter", "instagram", "youtube", "tiktok"];
 
-    // return true if there is an account already associate with platform
-    const isConnected = (platform: Platform) => {
-        return (platform.length == 7);
+  // Track which platforms are connected
+  const [connected, setConnected] = useState<Record<Platform, boolean>>({
+    twitter: false,
+    instagram: false,
+    youtube: false,
+    tiktok: false,
+  });
+
+  // Check connected platforms on mount
+  useEffect(() => {
+    platforms.forEach(async (platform) => {
+      try {
+        const formData = new FormData();
+        formData.append("platform", platform);
+
+        const res = await fetch("/api/isConnected", {
+          method: "POST",
+          body: formData,
+        });
+        if (!res.ok) return;
+
+        const data = (await res.json()) as {
+          success?: boolean;
+          platform: boolean;
+        };
+
+        if (!data.success) return;
+
+        setConnected((prev) => ({
+          ...prev,
+          [platform]: data.platform,
+        }));
+      } catch (e) {
+        console.log("Error checking platform:", platform, e);
+      }
+    });
+  }, []);
+const handlePost = () => {
+    if (!postPlatform) {
+      console.log("No platform selected");
+      return;
     }
 
-    const platforms: Platform[] = [
-        "twitter",
-        "instagram",
-        "youtube",
-        "tiktok",
-    ];
+    postCallback(postPlatform, caption);
+  };
 
-    // create a post with platform = postPlatform and content = caption
-    const handlePost = () => {
-        if (!postPlatform) {
-            console.log("no platform selected");
-            return;
-        }
-        postCallback(postPlatform, caption);
-    }
+  return (
+    <form
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        {platforms.map((platform) => (
+          <Button
+            key={platform}
+            variant="contained"
+            disabled={postPlatform === platform || !connected[platform]}
+            onClick={() => setPostPlatform(platform)}
+          >
+            {platform}
+          </Button>
+        ))}
+      </div>
 
-    return (
-        <form
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 12, // space between rows
-                width: "100%",
-            }}>
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 16
-            }}>
-                {platforms.map((platform) => (
-                    <div
-                        key={platform}
-                    >
-                        <Button
-                            variant="contained"
-                            disabled={(platform == postPlatform) || !isConnected(platform)}
-                            onClick={() => setPostPlatform(platform)}
-                        >
-                            {platform}
-                        </Button>
-                    </div>
-                ))}
+      <TextField
+        value={caption}
+        onChange={(e) => setCaption(e.target.value)}
+        multiline
+        rows={4}
+        placeholder="Write your caption here..."
+        variant="outlined"
+        fullWidth
+        sx={{ maxWidth: 500 }}
+      />
 
-            </div>
-            <TextField
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                multiline
-                rows={4}
-                placeholder="Write your caption here..."
-                variant="outlined"
-                fullWidth
-                sx={{ maxWidth: 500 }}
-            />
-
-            <h1></h1>
-            <Button
-                variant="contained"
-                disabled={!postPlatform}
-                onClick={handlePost}
-            >
-                Post {postPlatform && "on " + postPlatform} 
-            </Button>
-        </form>
-
-
-    );
+      <Button
+        variant="contained"
+        disabled={!postPlatform}
+        onClick={handlePost}
+        sx={{ marginTop: 12 }}
+      >
+        {postPlatform ? `Post on ${postPlatform}` : "Select a platform"}
+      </Button>
+    </form>
+  );
 }

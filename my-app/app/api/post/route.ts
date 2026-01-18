@@ -9,6 +9,7 @@ export async function POST(req :Request) {
         const video = formData.get("video") as File;
         const content = formData.get("content") as string;
     const accountResponse = await fetch('https://getlate.dev/api/v1/accounts', {
+        method: "GET",
         headers: {
           'Authorization': `Bearer ${process.env.lateKey}`
         }
