@@ -24,7 +24,16 @@ export default function ClipsPage() {
 
 
     const handleDownload = (idx:number, url: string) => {
-
+        if (!url) {
+            console.log("CAN'T DOWNLOAD")
+            return;
+        }
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `edited-video-${idx}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     return (
