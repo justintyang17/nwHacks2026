@@ -12,8 +12,8 @@ import { unlink } from "fs/promises";
 
 
 
-import  ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from 'ffmpeg-static';
+// import  ffmpeg from 'fluent-ffmpeg';
+// import ffmpegPath from 'ffmpeg-static';
 
 
 interface transcriptType {
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   import("fs/promises").then(fs => fs.unlink(subVideoPath).catch(() => {}));
   await unlink(subVideoPath).catch(() => {});
 
-  addHardcodedSubtitles(blurredFilePath,srtPath,subVideoPath);
+//   addHardcodedSubtitles(blurredFilePath,srtPath,subVideoPath);
   /*const blurredSubVideoUrl = 
 
    await new Promise<void>((resolve, reject) => {
@@ -121,27 +121,27 @@ export async function POST(req: Request) {
 
 
 // Tell fluent-ffmpeg where the ffmpeg executable is
-console.log(ffmpegPath)
-ffmpeg.setFfmpegPath("/opt/homebrew/bin/ffmpeg");
+// console.log(ffmpegPath)
+// ffmpeg.setFfmpegPath("/opt/homebrew/bin/ffmpeg");
 
 
 
 
 
-function addHardcodedSubtitles(input : string, srt : string, output : string) {
-    ffmpeg(input)
-        .outputOptions([
-            // Use the 'subtitles' video filter to burn the subtitles in
-            `-vf subtitles=${srt}`
-        ])
-        .on('error', function(err) {
-            console.error('An error occurred: ' + err.message);
-        })
-        .on('end', function() {
-            console.log('Hardcoded subtitles added successfully!');
-        })
-        .save(output);
-}
+// function addHardcodedSubtitles(input : string, srt : string, output : string) {
+//     ffmpeg(input)
+//         .outputOptions([
+//             // Use the 'subtitles' video filter to burn the subtitles in
+//             `-vf subtitles=${srt}`
+//         ])
+//         .on('error', function(err) {
+//             console.error('An error occurred: ' + err.message);
+//         })
+//         .on('end', function() {
+//             console.log('Hardcoded subtitles added successfully!');
+//         })
+//         .save(output);
+// }
 
 
 

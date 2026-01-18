@@ -8,6 +8,7 @@ import { useState } from "react";
 import PostModal from "../components/PostModal";
 import SocialMediaModal from "../components/SocialMediaModal";
 import { useEditedVideoContext } from "../context/EditedVideoContext";
+import { Platform } from "../context/SocialMediaContext";
 
 export default function ClipsPage() {
     const router = useRouter();
@@ -15,6 +16,7 @@ export default function ClipsPage() {
 
     const [postModal, setPostOpenModal] = useState(false);
     const [accountModal, setAccountModal] = useState(false);
+    const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
 
     const openPostModal = () => {
@@ -37,10 +39,20 @@ export default function ClipsPage() {
         removeEditedVideo(idx);
     };
 
-    const handleShare = (idx: number, url: string) => {
+    async function getFileFromUrl(url: string, filename: string) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch file from URL");
+
+        const blob = await res.blob(); // Get the raw file bytes
+        return new File([blob], filename, { type: blob.type });
+    }
+
+    const handleShare = async (idx: number, url: string) => {
+        const parts = url.split("/");
+        const filename = parts[parts.length - 1];
+        const file = await getFileFromUrl(url, filename);
+        setSelectedVideo(file);
         openPostModal();
-        void idx;
-        void url;
     };
 
     const handleDownload = (idx: number, url: string) => {
@@ -51,6 +63,42 @@ export default function ClipsPage() {
         a.download = "edited-video.mp4";
         a.click();
     };
+
+    const handlePost = async (platform: Platform, caption: string) => {
+        if (!selectedVideo) {
+            console.log("No Video Selected");
+            return;
+        }
+        try {
+            const formData = new FormData();
+            formData.append("platform", platform);
+            formData.append("content", caption);
+            formData.append("video", selectedVideo);
+
+            const res = await fetch("/api/post", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                console.log("post error");
+                return;
+            }
+
+            const data = (await res.json()) as {
+                success?: boolean;
+            };
+
+            if (!data.success) {
+                console.log("Post Failed.");
+                return;
+            }
+
+        } catch (e) {
+            console.log("Unexpected error while posting video.");
+        }
+        closePostModal();
+    }
 
     return (
         <main
@@ -133,7 +181,7 @@ export default function ClipsPage() {
                 </DialogTitle>
 
                 <DialogContent>
-                    <PostModal postCallback={closePostModal} />
+                    <PostModal postCallback={handlePost} />
                 </DialogContent>
             </Dialog>
 

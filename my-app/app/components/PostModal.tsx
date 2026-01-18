@@ -5,7 +5,7 @@ import { Platform, useSocialMediaContext } from "../context/SocialMediaContext";
 import { useState } from "react";
 
 interface PostModalComponentProps {
-  postCallback: () => void;
+  postCallback: (platform: Platform, caption: string) => void;
 }
 
 export default function PostModal({postCallback}: PostModalComponentProps) {
@@ -28,7 +28,11 @@ export default function PostModal({postCallback}: PostModalComponentProps) {
 
     // create a post with platform = postPlatform and content = caption
     const handlePost = () => {
-        postCallback();
+        if (!postPlatform) {
+            console.log("no platform selected");
+            return;
+        }
+        postCallback(postPlatform, caption);
     }
 
     return (

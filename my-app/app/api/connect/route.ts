@@ -33,18 +33,18 @@ export async function POST(req: Request) {
           console.log('Connected accounts:', accounts);
     
 
-        if (platform in accounts.filter((account : any) => {
-            return account.platform;
+        // if (platform in accounts.filter((account : any) => {
+        //     return account.platform;
            
-        })) {
-            //delete account
-            fetch("https://getlate.dev/api/v1/accounts/string", {
-                method: "DELETE",
-                headers: {
-                  "Authorization": `Bearer ${process.env.lateKey}`
-                }
-              })
-        }
+        // })) {
+        //     //delete account
+        //     fetch("https://getlate.dev/api/v1/accounts/string", {
+        //         method: "DELETE",
+        //         headers: {
+        //           "Authorization": `Bearer ${process.env.lateKey}`
+        //         }
+        //       })
+        // }
 
         const response = await fetch(
             `https://getlate.dev/api/v1/connect/${platform}?profileId=${profID}`,
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
           
           const { authUrl } = await response.json();
           // Redirect user to this URL to authorize
+          console.log(authUrl);
           window.location.href = authUrl;
 
 
