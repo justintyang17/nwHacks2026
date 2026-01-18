@@ -40,7 +40,7 @@ export default function VideoComponent({url, index, removeCallback, uploadCallba
             <div
                 style={{
                     display: "flex",
-                    width: "320px",
+                    width: "300px",
                     justifyContent: "space-between",
                     gap: 8,
                     paddingTop: 6,

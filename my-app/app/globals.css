@@ -100,15 +100,13 @@ body {
   right: -40px;
 }
 
-/* Horizontal spacing between uploaded videos on landing carousel */
+/* Horizontal spacing between uploaded videos on landing carousel
 .slick-slide > div {
   margin: 0 16px;
 }
 
 /* Keep track aligned with outer card while allowing inner spacing */
-.slick-list {
-  margin: 0 -12px;
-}
+
 
 /* Make the arrow hitboxes a bit larger for easier clicking */
 .slick-prev,

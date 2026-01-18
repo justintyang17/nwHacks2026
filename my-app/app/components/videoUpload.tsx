@@ -27,8 +27,8 @@ export default function VideoUpload() {
     const [openModal, setOpenModal] = useState(false);
     const sliderSettings = {
         infinite: false,
-        slidesToShow: 3,
-        slidesToScroll: 3,
+        slidesToShow: 2,
+        slidesToScroll: 2,
         arrows: true,
         draggable: true,
         centerMode: false,
@@ -36,8 +36,8 @@ export default function VideoUpload() {
             {
                 breakpoint: 1280,
                 settings: {
-                    slidesToShow: 3,
-                    slidesToScroll: 3,
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
                 },
             },
             {

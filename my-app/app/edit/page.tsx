@@ -467,7 +467,7 @@ export default function EditPage() {
                 onChange={(e) =>
                   setSubtitleLang(e.target.value as string)
                 }
-                style={{ minWidth: 160 }}
+                style={{ minWidth: 160, color: "white" }}
               >
                 <MenuItem value="en">English</MenuItem>
                 <MenuItem value="es">Spanish</MenuItem>
