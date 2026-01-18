@@ -3,7 +3,7 @@ import Late from '@getlatedev/node';
 
 
 
-class connect {
+class socialConnect {
 
     
     private profile : any;
