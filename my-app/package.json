@@ -11,8 +11,10 @@
   "dependencies": {
     "@elevenlabs/elevenlabs-js": "^2.31.0",
     "@emotion/react": "^11.14.0",
+    "@emotion/style": "^0.8.0",
     "@emotion/styled": "^11.14.1",
     "@getlatedev/node": "^0.1.0",
+    "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "axios": "^1.13.2",
     "dotenv": "^17.2.3",

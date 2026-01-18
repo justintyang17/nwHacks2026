@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import { Platform, useSocialMediaContext } from "../context/SocialMediaContext";
+import InstagramIcon from '@mui/icons-material/Instagram';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
 
 export default function SocialMediaModal() {
   const { accounts, setAccount } = useSocialMediaContext();
 
   const platforms: Platform[] = ["twitter", "instagram", "youtube", "tiktok"];
+
+  const platformIcons: Record<Platform, JSX.Element> = {
+    twitter: <TwitterIcon />,
+    instagram: <InstagramIcon />,
+    youtube: <YouTubeIcon />,
+    tiktok: <MusicNoteIcon />,
+  };
 
   // store connection status per platform
   const [connected, setConnected] = useState<Record<Platform, boolean>>({
@@ -67,7 +78,7 @@ const handleConnect = async (platform: Platform) => {
   return (
     <form>
       <div>
-        {platforms.map(platform => (
+        {platforms.map((platform) => (
           <div
             key={platform}
             style={{
@@ -81,9 +92,18 @@ const handleConnect = async (platform: Platform) => {
               backgroundColor: "rgba(15,23,42,0.2)",
             }}
           >
-            <h3 style={{ margin: 0, textTransform: "capitalize" }}>
-              {platform}
-            </h3>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              {platformIcons[platform]}
+              <h3 style={{ margin: 0, textTransform: "capitalize" }}>
+                {platform}
+              </h3>
+            </div>
 
             <Button variant="contained" onClick={() => handleConnect(platform)}>
               {connected[platform] ? "Change Account" : "Add Account"}

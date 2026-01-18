@@ -3,6 +3,10 @@
 import { Button, TextField } from "@mui/material";
 import { Platform, useSocialMediaContext } from "../context/SocialMediaContext";
 import { useState, useEffect } from "react";
+import InstagramIcon from "@mui/icons-material/Instagram";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import TwitterIcon from "@mui/icons-material/Twitter";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
 
 interface PostModalComponentProps {
   postCallback: (platform: Platform, caption: string) => void;
@@ -14,6 +18,12 @@ export default function PostModal({ postCallback }: PostModalComponentProps) {
   const [caption, setCaption] = useState("");
 
   const platforms: Platform[] = ["twitter", "instagram", "youtube", "tiktok"];
+  const platformIcons: Record<Platform, JSX.Element> = {
+    twitter: <TwitterIcon />,
+    instagram: <InstagramIcon />,
+    youtube: <YouTubeIcon />,
+    tiktok: <MusicNoteIcon />,
+  };
 
   // Track which platforms are connected
   const [connected, setConnected] = useState<Record<Platform, boolean>>({
@@ -86,8 +96,9 @@ const handlePost = () => {
             variant="contained"
             disabled={postPlatform === platform || !connected[platform]}
             onClick={() => setPostPlatform(platform)}
+            aria-label={platform}
           >
-            {platform}
+            {platformIcons[platform]}
           </Button>
         ))}
       </div>
