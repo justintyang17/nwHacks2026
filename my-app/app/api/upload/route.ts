@@ -23,6 +23,12 @@ export async function POST(req: Request) {
     );
   }
 
+  // 0. Get transcription of uploaded video
+  console.log("[/api/upload] Getting Transcription");
+  const vt = new videoTranscription();
+  const transcription = vt.transcribe(file);
+  console.log(transcription);
+
   // 1. Save original uploaded video to disk (e.g. public/uploads)
   const uploadDir = path.join(process.cwd(), "public", "uploads");
   await mkdir(uploadDir, { recursive: true });

@@ -36,7 +36,7 @@ export class videoTranscription {
         })
         if("languageCode" in transcription && "text" in transcription) {
             if (transcription["languageCode"] !== "eng" && typeof(transcription["text"]) === "string" ) {
-                return transcription.text; //add translation !!!!!!
+                return transcription.text;
             } else {
                 return transcription.text;
             }
@@ -51,10 +51,16 @@ export class videoTranscription {
     public async dubAudio(videFile: File) {
         const dubbed : object = await this.elevenLabs.dubbing.create({
             file: videFile,
-            targetLang: "eng",
+            targetLang: "en",
         })
+        if ("dubbing_id" in dubbed && "language_code" in dubbed && "srt" in dubbed) {
+            const transcript = this.elevenLabs.dubbing.transcripts.get(dubbed["dubbing_id"] as string , dubbed["language_code"] as string, dubbed["srt"] as string)
+            return transcript;
+        }
 
-        return dubbed;
+        
+
+
     }
 
     
