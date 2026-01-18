@@ -68,7 +68,6 @@ export default function VideoUpload() {
     return (
         <main
             style={{
-                minHeight: "100vh",
                 padding: "32px 24px",
                 backgroundColor: "#000000",
                 color: "#f9fafb",

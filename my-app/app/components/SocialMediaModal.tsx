@@ -47,7 +47,7 @@ export default function SocialMediaModal() {
         }}
       >
         <h3 style={{ margin: 0, textTransform: "capitalize" }}>
-            {platform} {isConnected(platform) ? "" : "-" + getAccount(platform)}
+            {platform} {isConnected(platform) ? "" : "- " + getAccount(platform)}
         </h3>
 
         <Button
