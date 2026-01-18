@@ -21,34 +21,38 @@ export default function SocialMediaModal() {
     ];
 
     // set new account or replace existing account
-    const handleConnect = async (platform: Platform) => {
-    try {
-        const formData = new FormData();
-        formData.append("platform", platform);
+    const  handleConnect = async (platform: Platform) => {
+        try {
+            const formData = new FormData();
+            formData.append("platform", platform);
 
-        const res = await fetch("/api/connect", {
-            method: "POST",
-            body: formData,
-        });
+            const res = await fetch("/api/connect", {
+                method: "POST",
+                body: formData,
+            });
 
-        if (!res.ok) {
-            console.log("connection error");
-            return;
-        }
+            if (!res.ok) {
+                console.log("connection error");
+                return;
+            }
 
-        const data = await res.json() as { authUrl?: string };
+            const data = (await res.json()) as {
+                success?: boolean,
+                auth: string
+            };
 
-        if (!data.authUrl) {
+            window.location.href = data.auth;
+
+            setAccount(platform, null)
+
+            if (!data.success) {
+                console.log("Unexpected error while connecting to accounts.");
+                return;
+            }
+
+        } catch (e) {
             console.log("Unexpected error while connecting to accounts.");
-            return;
         }
-
-        // redirect user to authorization URL
-        window.location.href = data.authUrl;
-
-    } catch (e) {
-        console.log("Unexpected error while connecting to accounts.");
-    }
     };
 
 // get username associated with this platform, assume that it is connected

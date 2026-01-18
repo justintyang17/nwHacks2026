@@ -57,8 +57,13 @@ export async function POST(req: Request) {
           
           const { authUrl } = await response.json();
           // Redirect user to this URL to authorize
-          console.log(authUrl);
-          window.location.href = authUrl;
+          
+
+
+          return NextResponse.json({
+            success: true,
+            auth: authUrl
+          })
 
 
     } catch (err) {
