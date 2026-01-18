@@ -2,6 +2,10 @@
 
 import {
     Button,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    IconButton,
     Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -12,12 +16,14 @@ import { setSelectedVideoFile } from "./videoStore";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { useOriginalVideoContext } from "../context/VideoContext";
-
+import SocialMediaModal from "./SocialMediaModal";
 
 export default function VideoUpload() {
     const router = useRouter();
 
     const { originalVideos, addOriginalVideo, removeOriginalVideo } = useOriginalVideoContext();
+    const [openModal, setOpenModal] = useState(false);
+
     const sliderSettings = {
         infinite: false,
         slidesToShow: 3,
@@ -40,13 +46,6 @@ export default function VideoUpload() {
         removeOriginalVideo(idx);
     };
 
-    // useEffect(() => {
-    //     if (originalVideos.length === 0) return;
-        
-    //     const urls = originalVideos.map((v) => URL.createObjectURL(v));
-    //     setPreviewUrls(urls);
-    // }, [originalVideos]);
-
     const handleUpload = (idx: number, url: string) => {
         //const video = videos[idx];
         const video = originalVideos[idx]
@@ -57,6 +56,14 @@ export default function VideoUpload() {
 
         router.push("/edit");
     };
+
+    const openAccountModal = () => {
+        setOpenModal(true);
+    }
+
+    const closeAccountModal = () => {
+        setOpenModal(false);
+    }
 
     return (
         <main
@@ -82,8 +89,8 @@ export default function VideoUpload() {
                 }}
             >
                 <Typography variant="h5">Add Videos</Typography>
-                <Button variant="outlined" color="inherit">
-                    Help
+                <Button variant="outlined" color="inherit" onClick={openAccountModal}>
+                    Account
                 </Button>
             </div>
 
@@ -154,6 +161,27 @@ export default function VideoUpload() {
                     </Slider>
                 )}
             </div>
+
+            <Dialog
+                open={openModal}
+                onClose={closeAccountModal}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>
+                    Accounts
+                    <IconButton
+                        onClick={closeAccountModal}
+                        sx={{ position: "absolute", right: 8, top: 8 }}
+                    >
+                        X
+                    </IconButton>
+                </DialogTitle>
+
+                <DialogContent>
+                    <SocialMediaModal />
+                </DialogContent>
+            </Dialog>
         </main>
     );
 }

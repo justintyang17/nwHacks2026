@@ -7,14 +7,11 @@ import {
     ReactNode,
 } from "react";
 
-/* ----------------------------- Types ----------------------------- */
-
 export type Platform = "instagram" | "twitter" | "tiktok" | "youtube";
 
 export type SocialAccount = {
     username: string;
-    accessToken: string;      // OAuth access token
-    expiresAt?: number;       // optional expiration timestamp
+    id: string;
 };
 
 type SocialMediaContextType = {
@@ -63,8 +60,6 @@ export const SocialMediaContextProvider = ({
         </SocialMediaContext.Provider>
     );
 };
-
-
 
 export const useSocialMediaContext = () => {
     const context = useContext(SocialMediaContext);
